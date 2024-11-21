@@ -11,6 +11,7 @@ const int alpha_slider_max = 30;
 int slider_value;
 int value_trackbar = 0;
 int camera = 0;
+int i = 0;
 
 bool record = false;
 
@@ -24,7 +25,12 @@ enum
     SOBEL_EDGE_DETECTION,
     BRIGHTNESS,
     CONTRAST,
-    NEGATIVE
+    NEGATIVE, 
+    GRAYSCALE,
+    RESIZING,
+    ROTATE_90,
+    VERTICALLY_MIRROR,
+    HORITALLY_MIRROR
 };
 
 int selectEfect = ORIGINAL;
@@ -52,7 +58,7 @@ int main(void)
     int frame_height = static_cast<int>(cap.get(CAP_PROP_FRAME_HEIGHT));
     int fps = static_cast<int>(cap.get(CAP_PROP_FPS));
 
-    Mat frame, output_frame;
+    Mat frame, output_frame, temp_frame, rotation_matrix;
     while (true)
     {
         cap >> frame;
@@ -87,6 +93,22 @@ int main(void)
             break;
         case NEGATIVE:
             frame.convertTo(output_frame, -1, -1, 255);
+            break;
+        case GRAYSCALE:
+            cvtColor(frame, output_frame, COLOR_BGR2GRAY);
+            break;
+        case RESIZING:
+            resize(frame, output_frame, Size(), 0.5, 0.5);
+            break;
+        case ROTATE_90:
+            rotation_matrix = getRotationMatrix2D(Point2f(frame.cols / 2.0, frame.rows / 2.0), 90, 1);
+            warpAffine(frame, output_frame, rotation_matrix, frame.size());
+            break;
+        case VERTICALLY_MIRROR:
+            flip(frame, output_frame, 0);
+            break;
+        case HORITALLY_MIRROR:
+            flip(frame, output_frame, 1);
             break;
         }
 
@@ -147,6 +169,36 @@ int main(void)
         if (key == 78 || key == 110) // Negative key (N or n)
         {
             selectEfect = NEGATIVE;
+        }
+
+        if (key == 89 || key == 121) // Grayscale key (Y or y)
+        {
+            selectEfect = GRAYSCALE;
+        }
+
+        if (key == 90 || key == 122) // Resizing key (Z or z)
+        {
+            selectEfect = RESIZING;
+        }
+
+        if (key == 79 || key == 111) // Rotate 90 key (O or o)
+        {
+            selectEfect = ROTATE_90;
+        }
+
+        if (key == 86 || key == 118) // Vertically Mirror key (V or v)
+        {
+            selectEfect = VERTICALLY_MIRROR;
+        }
+
+        if (key == 72 || key == 104) // Horizontally Mirror key (H or h)
+        {
+            selectEfect = HORITALLY_MIRROR;
+        }
+        
+        if (key == 84 || key == 116) // Original key (T or t)
+        {
+            selectEfect = ORIGINAL;
         }
 
         if (key == 27 || getWindowProperty("Input Video", WND_PROP_VISIBLE) < 1 || getWindowProperty("Output Video", WND_PROP_VISIBLE) < 1)
