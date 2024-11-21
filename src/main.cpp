@@ -30,7 +30,7 @@ enum
     RESIZING,
     ROTATE_90,
     VERTICALLY_MIRROR,
-    HORITALLY_MIRROR
+    HORIZONTALLY_MIRROR
 };
 
 int selectEffect = ORIGINAL;
@@ -118,7 +118,7 @@ int main(void)
                 frame.copyTo(output_frame); 
             }
             break;
-        case HORITALLY_MIRROR:
+        case HORIZONTALLY_MIRROR:
             if (flip_horizontal) {
                 flip(frame, output_frame, 1); 
             } else {
@@ -222,7 +222,7 @@ int main(void)
 
         if (key == 72 || key == 104) // Horizontally Mirror key (H or h)
         {
-            selectEffect = HORITALLY_MIRROR;
+            selectEffect = HORIZONTALLY_MIRROR;
             flip_horizontal = !flip_horizontal;
         }
         
