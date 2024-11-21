@@ -33,7 +33,8 @@ enum
     HORITALLY_MIRROR
 };
 
-int selectEfect = ORIGINAL;
+int selectEffect = ORIGINAL;
+int rotateCode = -1;
 
 int main(void)
 {
@@ -58,6 +59,9 @@ int main(void)
     int frame_height = static_cast<int>(cap.get(CAP_PROP_FRAME_HEIGHT));
     int fps = static_cast<int>(cap.get(CAP_PROP_FPS));
 
+    static bool flip_horizontal = false;
+    static bool flip_vertical = false;
+
     Mat frame, output_frame, temp_frame, rotation_matrix;
     while (true)
     {
@@ -70,7 +74,7 @@ int main(void)
 
         int k_size;
 
-        switch (selectEfect)
+        switch (selectEffect)
         {
         case ORIGINAL:
             frame.copyTo(output_frame);
@@ -86,10 +90,10 @@ int main(void)
             Sobel(frame, output_frame, CV_8U, 1, 1);
             break;
         case BRIGHTNESS:
-            frame.convertTo(output_frame, -1, 1, value_trackbar);
+            frame.convertTo(output_frame, -1, 1, 2*value_trackbar);
             break;
         case CONTRAST:
-            frame.convertTo(output_frame, -1, value_trackbar, 0);
+            frame.convertTo(output_frame, -1, 0.1*value_trackbar, 0);
             break;
         case NEGATIVE:
             frame.convertTo(output_frame, -1, -1, 255);
@@ -101,20 +105,35 @@ int main(void)
             resize(frame, output_frame, Size(), 0.5, 0.5);
             break;
         case ROTATE_90:
-            rotation_matrix = getRotationMatrix2D(Point2f(frame.cols / 2.0, frame.rows / 2.0), 90, 1);
-            warpAffine(frame, output_frame, rotation_matrix, frame.size());
+            if (rotateCode == -1) {
+                frame.copyTo(output_frame);
+            } else {
+                rotate(frame, output_frame, rotateCode);
+            }
             break;
         case VERTICALLY_MIRROR:
+            if (flip_vertical) {
             flip(frame, output_frame, 0);
+            } else {
+                frame.copyTo(output_frame); 
+            }
             break;
         case HORITALLY_MIRROR:
-            flip(frame, output_frame, 1);
+            if (flip_horizontal) {
+                flip(frame, output_frame, 1); 
+            } else {
+                frame.copyTo(output_frame); 
+            }
             break;
         }
 
         if (record) 
         {
+            if (selectEffect == ROTATE_90 || selectEffect == RESIZING) {
+                writer.write(frame);
+            } else {
             writer.write(output_frame); 
+            }
         }
 
         imshow("Input Video", frame);
@@ -143,62 +162,73 @@ int main(void)
 
         if (key == 71 || key == 103) // Gaussian Blur key (G or g)
         {
-            selectEfect = GAUSSIAN_BLUR;
+            selectEffect = GAUSSIAN_BLUR;
         }
 
         if (key == 69 || key == 101) // Canny Edge Detection key (E or e)
         {
-            selectEfect = CANNY_EDGE_DETECTION;
+            selectEffect = CANNY_EDGE_DETECTION;
         }
 
         if (key == 83 || key == 115) // Sobel Edge Detection key (S or s)
         {
-            selectEfect = SOBEL_EDGE_DETECTION;
+            selectEffect = SOBEL_EDGE_DETECTION;
         }
         
         if (key == 66 || key == 98) // Brightness key (B or b)
         {
-            selectEfect = BRIGHTNESS;
+            selectEffect = BRIGHTNESS;
         }
 
         if (key == 67 || key == 99) // Contrast key (C or c)
         {
-            selectEfect = CONTRAST;
+            selectEffect = CONTRAST;
         }
 
         if (key == 78 || key == 110) // Negative key (N or n)
         {
-            selectEfect = NEGATIVE;
+            selectEffect = NEGATIVE;
         }
 
         if (key == 89 || key == 121) // Grayscale key (Y or y)
         {
-            selectEfect = GRAYSCALE;
+            selectEffect = GRAYSCALE;
         }
 
         if (key == 90 || key == 122) // Resizing key (Z or z)
         {
-            selectEfect = RESIZING;
+            selectEffect = RESIZING;
         }
 
         if (key == 79 || key == 111) // Rotate 90 key (O or o)
         {
-            selectEfect = ROTATE_90;
+            selectEffect = ROTATE_90;
+            if (rotateCode == ROTATE_90_CLOCKWISE) {
+                rotateCode = ROTATE_180;
+            } else if (rotateCode == ROTATE_180) {
+                rotateCode = ROTATE_90_COUNTERCLOCKWISE;
+            } else if (rotateCode == ROTATE_90_COUNTERCLOCKWISE) {
+                rotateCode = -1;
+            } else if (rotateCode == -1) {
+                rotateCode = ROTATE_90_CLOCKWISE;
+            }
         }
 
         if (key == 86 || key == 118) // Vertically Mirror key (V or v)
         {
-            selectEfect = VERTICALLY_MIRROR;
+            selectEffect = VERTICALLY_MIRROR;
+            flip_vertical = !flip_vertical;
         }
 
         if (key == 72 || key == 104) // Horizontally Mirror key (H or h)
         {
-            selectEfect = HORITALLY_MIRROR;
+            selectEffect = HORITALLY_MIRROR;
+            flip_horizontal = !flip_horizontal;
         }
         
         if (key == 84 || key == 116) // Original key (T or t)
         {
-            selectEfect = ORIGINAL;
+            selectEffect = ORIGINAL;
         }
 
         if (key == 27 || getWindowProperty("Input Video", WND_PROP_VISIBLE) < 1 || getWindowProperty("Output Video", WND_PROP_VISIBLE) < 1)
